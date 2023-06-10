@@ -7,9 +7,13 @@ def init_UART():
         baud_rate = 9600  # Set the baud rate
         timeout = 0
         uart0_filestream = serial.Serial(port, baud_rate, timeout=timeout)
+        if uart0_filestream.is_open:
+            print("Serial port is already open.")
+        else:
+            # Open the serial port
+            uart0_filestream.open()
+            print("Serial port opened successfully.")
 
-        uart0_filestream.open()
- 
         return uart0_filestream
     except serial.SerialException as e:
 
@@ -17,6 +21,7 @@ def init_UART():
 
 def write_UART(uart0_filestream, buffer):
     if uart0_filestream:
+        print('wrote')
         uart0_filestream.write(buffer)
     else:
         print('failed to write')

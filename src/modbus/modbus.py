@@ -7,31 +7,38 @@ class ModBus:
         self.uart = uart.init_UART()
 
     def write(self, target_address, code, subcode, matricula, data):
-        tx_buffer = bytearray()
-        p_tx_buffer = 0
+        try:
+            print(self, target_address, code, subcode, matricula, data)
+            tx_buffer = bytearray()
+            p_tx_buffer = 0
 
-        tx_buffer += struct.pack('B', target_address)
-        tx_buffer += struct.pack('B', code)
-        tx_buffer += struct.pack('B', subcode)
-        tx_buffer += struct.pack('B', matricula[0])
-        tx_buffer += struct.pack('B', matricula[1])
-        tx_buffer += struct.pack('B', matricula[2])
-        tx_buffer += struct.pack('B', matricula[3])
-        p_tx_buffer += 7
+            tx_buffer += struct.pack('B', target_address)
+            tx_buffer += struct.pack('B', code)
+            tx_buffer += struct.pack('B', subcode)
+            tx_buffer += struct.pack('B', matricula[0])
+            tx_buffer += struct.pack('B', matricula[1])
+            tx_buffer += struct.pack('B', matricula[2])
+            tx_buffer += struct.pack('B', matricula[3])
+            p_tx_buffer += 7
 
-        if subcode >= 0xD1 and subcode <= 0xD7:
-            tx_buffer += struct.pack('I', data)
-            p_tx_buffer += 4
-        elif subcode == 0xD8:
-            strLen = len(data)
-            tx_buffer += struct.pack('B', strLen)
-            tx_buffer += data.encode()
-            p_tx_buffer += strLen
+            if subcode >= 0xD1 and subcode <= 0xD7:
+                tx_buffer += struct.pack('I', data)
+                p_tx_buffer += 4
+            elif subcode == 0xD8:
+                strLen = len(data)
+                tx_buffer += struct.pack('B', strLen)
+                tx_buffer += data.encode()
+                p_tx_buffer += strLen
 
-        tx_buffer = struct.pack('h', crc.calcula_CRC(tx_buffer, p_tx_buffer))
-        p_tx_buffer += 2
+            tx_buffer += struct.pack('h', crc.calcula_CRC(tx_buffer, p_tx_buffer))
+            p_tx_buffer += 2
 
-        uart.write_UART(self.uart, tx_buffer)
+
+            for i in tx_buffer:
+                print(i)
+            uart.write_UART(self.uart, tx_buffer)
+        except Exception as e:
+            print(e)
         #    printf("Digite o comando: ");
         # scanf("%x", &command);
 
@@ -120,4 +127,4 @@ class ModBus:
 
 x = ModBus()
 
-x.write(0x01, 0x23, 0xC1 , (1, 6 ,0 , 2), False)
+x.write(0x01, 0x23, 0xD8 , (1, 6 ,0 , 2), "jairo")
