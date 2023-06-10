@@ -6,12 +6,8 @@
 #include "./src/modbus/crc/crc.h"
 #define TAMANHO_MATRICULA 4
 
-int init_UART();
-
 int main(int argc, const char *argv[])
 {
-
-    int uart0_filestream = init_UART();
 
     // TODO
     int mod_bus_code = 0x23;

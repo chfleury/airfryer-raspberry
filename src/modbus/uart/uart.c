@@ -8,7 +8,7 @@
 
 int uart0_filestream = -1;
 
-UART_RESPONSE init_UART();
+struct UART_RESPONSE init_uart();
 
 struct UART_RESPONSE read();
 
@@ -156,7 +156,6 @@ int main(int argc, const char *argv[])
         }
     }
 
-    close(uart0_filestream);
     return 0;
 }
 
@@ -241,4 +240,9 @@ struct UART_RESPONSE write(void *data, int size)
     }
 
     return response;
+}
+
+void close_UART()
+{
+    close(uart0_filestream);
 }

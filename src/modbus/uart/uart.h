@@ -10,5 +10,6 @@ struct UART_RESPONSE
 void init_uart(double Kp_, double Ki_, double Kd_);
 void pid_atualiza_referencia(float referencia_);
 double pid_controle(double saida_medida);
+void close_uart();
 
 #endif /* UART_H_ */
