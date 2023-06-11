@@ -127,4 +127,4 @@ class ModBus:
 
 x = ModBus()
 
-x.write(0x01, 0x23, 0xD8 , (1, 6 ,0 , 2), "jairo")
+x.write(0x01, 0x16, 0xD8 , (1, 6 ,0 , 2), "jairo")
