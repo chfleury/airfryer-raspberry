@@ -2,9 +2,10 @@ import RPi.GPIO as GPIO
 import threading
 import time
 # pullup pull down
-SW_GPIO = 7
-DT_GPIO = 8
-CLK_GPIO = 25
+
+CLK_GPIO = 16
+SW_GPIO = 21
+DT_GPIO = 20
 
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
