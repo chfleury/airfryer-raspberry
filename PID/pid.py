@@ -1,22 +1,17 @@
 class PID:
-    def __init__(self):
+    def __init__(self, Kp_, Ki_, Kd_):
         self.saida_medida = 0.0
         self.sinal_de_controle = 0.0
         self.referencia = 0.0
-        self.Kp = 0.0
-        self.Ki = 0.0
-        self.Kd = 0.0
+        self.Kp = Kp_
+        self.Ki = Ki_
+        self.Kd = Kd_
         self.T = 1
         self.last_time = 0
         self.erro_total = 0.0
         self.erro_anterior = 0.0
         self.sinal_de_controle_MAX = 100
         self.sinal_de_controle_MIN = 100
-
-    def pid_configura_constantes(self, Kp_, Ki_, Kd_):
-        self.Kp = Kp_
-        self.Ki = Ki_
-        self.Kd = Kd_
 
     def pid_atualiza_referencia(self, referencia_):
         self.referencia = referencia_

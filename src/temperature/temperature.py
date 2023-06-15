@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-
-import time
 from bmp280 import BMP280
 
 try:
@@ -8,11 +5,12 @@ try:
 except ImportError:
     from smbus import SMBus
 
-# Initialise the BMP280
-bus = SMBus(1)
-bmp280 = BMP280(i2c_dev=bus)
+def init_bmp280():
+    bus = SMBus(1)
+    return BMP280(i2c_dev=bus)
+     
 
-def getTemperature():
+def getTemperature(bmp280):
     return bmp280.get_temperature()
   
 
