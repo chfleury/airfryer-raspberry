@@ -5,10 +5,12 @@ from modbus.modbus import ModBus
 from power.power_control import PowerControl
 from pid.pid import PID
 from lcd_display.lcd_display import LCDController
+from temperature.temperature import Bmp280
 
 class AirFryer:
     def __init__(self):
         signal.signal(signal.SIGALRM, self.controle)
+        signal.signal(signal.SIGINT, self.stateToOff)
 
         self.state = 'off' # 'on', 'off', 'running'
         self.modBus = ModBus()
@@ -17,10 +19,13 @@ class AirFryer:
         self.pid = PID(30, 0.2, 400)
         self.referencia = 0
         self.currentInternalTemperature = 0
+        self.currentExternalTemperature = 0
 
         self.lcd = LCDController()
         self.lcd.init_lcd()
         self.lcd.turn_off_lcd_backlight()
+
+        self.externalTemperatureSensor = Bmp280()
 
     # Signal handler function
     def controle(self, _signum, _frame):
@@ -61,6 +66,10 @@ class AirFryer:
         self.state = 'off'
         self.powerControl.stop_pwm()
         self.lcd.turn_off_lcd_backlight()
+
+    def updateCurrentExternalTemperature(self):
+        self.currentExternalTemperature = self.externalTemperatureSensor.getTemperature()
+
 
     def readUserCommands(self):
         self.modBus.write(0x01, 0x23, 0xC3 , (1, 6 ,0 , 2), None)

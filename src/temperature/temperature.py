@@ -5,13 +5,14 @@ try:
 except ImportError:
     from smbus import SMBus
 
-def init_bmp280():
-    bus = SMBus(1)
-    return BMP280(i2c_dev=bus)
-     
+class Bmp280:
+    def __init__(self):
+        bus = SMBus(1)
+        self.bmp280 = BMP280(i2c_dev=bus)
 
-def getTemperature(bmp280):
-    return bmp280.get_temperature()
+
+    def getTemperature(self):
+        return self.bmp280.get_temperature()
   
 
 # while True:

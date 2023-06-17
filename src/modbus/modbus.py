@@ -1,11 +1,13 @@
-from crc  import crc
-from uart import uart
+from modbus import crc
 import struct
+
+from modbus.uart.uart import Uart
+from modbus.crc.crc import calcula_CRC
 
 class ModBus:
     def __init__(self):
         self.myAddress = 0x00
-        self.uart = uart.Uart()
+        self.uart = Uart()
         self.uart.init_UART()
 
     def write(self, target_address, code, subcode, matricula, data):
@@ -36,7 +38,7 @@ class ModBus:
                 tx_buffer += data.encode()
                 p_tx_buffer += strLen
 
-            tx_buffer += struct.pack('h', crc.calcula_CRC(tx_buffer, p_tx_buffer))
+            tx_buffer += struct.pack('h', calcula_CRC(tx_buffer, p_tx_buffer))
             p_tx_buffer += 2
 
 
@@ -67,7 +69,7 @@ class ModBus:
 
             crc = struct.unpack('<h', data_buffer[index:index+2+1])[0]
 
-            if crc != crc.calcula_CRC(data_buffer[:index+1]):
+            if crc != calcula_CRC(data_buffer[:index+1]):
                 return -1
             
             return data
