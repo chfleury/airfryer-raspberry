@@ -77,7 +77,9 @@ class AirFryer:
 
             self.pid.updateReference(self.referenceTemperature)
 
-            pidSignal= self.pid.pidControl(self.currentInternalTemperature)
+            pidSignal = self.pid.pidControl(self.currentInternalTemperature)
+
+            self.sendPidSignal(pidSignal)
 
             if pidSignal < 0:
                 pidSignal *= -1
@@ -103,7 +105,7 @@ class AirFryer:
 
         self.currentExternalTemperature = self.externalTemperatureSensor.getTemperature()
 
-        self.modBus.write(0x01, 0x23, 0xD6 , (1, 6 ,0 , 2), self.currentExternalTemperature)
+        self.modBus.write(0x01, 0x16, 0xD6 , (1, 6 ,0 , 2), self.currentExternalTemperature)
         
 
     def mainLoop(self):
@@ -133,12 +135,15 @@ class AirFryer:
         self.state = 'running'
         self.timeLeft = self.referenceTime
         self.controle()
-        self.modBus.write(0x01, 0x23, 0xD3, (1, 6 ,0 , 2), 1)
+        self.modBus.write(0x01, 0x16, 0xD5, (1, 6 ,0 , 2), 0b1)
         time.sleep(0.2)
         self.modBus.read()
 
     def stopRunning(self):
         self.state = 'on'
+        self.sendPidSignal(0)
+        self.powerControl.stop_pwm()
+
 
     def incrementTime(self):
         pass
@@ -153,7 +158,7 @@ class AirFryer:
         self.state = 'on'
         # turn lcd on
         self.lcd.turn_on_lcd_backlight()
-        self.modBus.write(0x01, 0x23, 0xD3, (1, 6 ,0 , 2), 1)
+        self.modBus.write(0x01, 0x16, 0xD3, (1, 6 ,0 , 2), 0b1)
         time.sleep(1)
         self.modBus.read()
 
@@ -166,12 +171,16 @@ class AirFryer:
         self.state = 'off'
         self.powerControl.stop_pwm()
         self.lcd.turn_off_lcd_backlight()
-        self.modBus.write(0x01, 0x23, 0xD3, (1, 6 ,0 , 2), 0)
+        self.modBus.write(0x01, 0x16, 0xD3, (1, 6 ,0 , 2), 0)
         time.sleep(0.2)
         self.modBus.read()
 
     def updateCurrentExternalTemperature(self):
         self.currentExternalTemperature = self.externalTemperatureSensor.getTemperature()
+
+    def sendPidSignal(self, pidSignal):
+        self.modBus.write(0x01, 0x16, 0xD2 , (1, 6 ,0 , 2), pidSignal)
+
 
     def readUserCommands(self):
         self.modBus.write(0x01, 0x23, 0xC3 , (1, 6 ,0 , 2), None)
