@@ -13,13 +13,18 @@ class AirFryer:
         signal.signal(signal.SIGINT, self.controleOff)
 
         self.state = 'off' # 'on', 'off', 'running'
+        self.runningState = 'preheating' # 'preheating', 'heating', 'cooling'
+        self.mode = 'manual' # 'manual', 'auto'
         self.modBus = ModBus()
         
         self.powerControl = PowerControl()
         self.pid = PID(30, 0.2, 400)
-        self.referencia = 0
+
+        self.referenceTemperature = 0
         self.currentInternalTemperature = 0
         self.currentExternalTemperature = 0
+        self.referenceTime = 0
+        self.timeLeft = 0
 
         self.lcd = LCDController()
         self.lcd.init_lcd()
@@ -29,10 +34,44 @@ class AirFryer:
 
     # Signal handler function
     def controle(self, _signum, _frame):
+        self.updateTemperatures()
+
+        if self.state == 'on':
+            self.lcd_string('Modo: Manual', self.LCD_LINE_1)
+            # self.lcd_string('Modo: Automatico - Frango', self.LCD_LINE_1)
+
+            self.lcd_string('Ref.: {:05.2f}*C'.format(self.referenceTemperature), self.LCD_LINE_2)
+            # self.lcd_string('Tempo: 1min', self.LCD_LINE_2) self.referenceTime
+
+
         if self.state == 'running':
             signal.alarm(1)
 
-            self.pid.updateReference(self.referencia)
+            lcdLineOne = ''
+            lcdLineTwo = ''
+            if self.mode == 'manual':
+                lcdLineOne = 'TI: {:.1f} *C Ref.: {:.1f} *C'.format(self.currentInternalTemperature, self.referenceTemperature)
+               
+                if self.runningState == 'cooling':
+                    lcdLineTwo = 'Esfriando...'
+                elif self.runningState == 'heating':
+                    lcdLineTwo =  'Aquecendo...'
+            elif self.mode == 'auto':
+                self.timeLeft -= self.timeLeft
+                lcdLineOne = 'TI: {:.1f} *C Ref.: {:.1f} *C'.format(self.currentInternalTemperature, self.referenceTemperature)
+                # lcdLineOne = 'Frango - 50*C' todo pensar melhor
+                if self.runningState == 'preheating':
+                    lcdLineTwo = 'Pre-aquecendo...'
+                elif self.runningState == 'cooling':
+                    lcdLineTwo = 'Esfriando...'
+                elif self.runningState == 'heating':
+                    minutes, seconds = divmod(self.timeLeft, 60)
+                    lcdLineTwo =  'Tempo: {:02d}:{:02d}'.format(minutes, seconds)
+
+            self.lcd_string(lcdLineOne, self.LCD_LINE_2)
+            self.lcd_string(lcdLineTwo, self.LCD_LINE_2)
+
+            self.pid.updateReference(self.referenceTemperature)
 
             signal = self.pid.pidControl(self.currentInternalTemperature)
 
@@ -44,6 +83,25 @@ class AirFryer:
 
             print("SIGALRM received!")
 
+
+    def updateTemperatures(self):
+        self.modBus.write(0x01, 0x23, 0xC1 , (1, 6 ,0 , 2), None)
+        time.sleep(0.2)
+        data = self.modBus.read()
+        if data != -1  and data != None:
+            self.currentInternalTemperature = data['value']
+        
+        self.modBus.write(0x01, 0x23, 0xC2 , (1, 6 ,0 , 2), None)
+        time.sleep(0.2)
+        data = self.modBus.read()
+        if data != -1  and data != None:
+            self.referenceTemperature = data['value']
+
+        self.currentExternalTemperature = self.externalTemperatureSensor.getTemperature()
+
+        self.modBus.write(0x01, 0x23, 0xD6 , (1, 6 ,0 , 2), self.currentExternalTemperature)
+        
+
     def mainLoop(self):
         while True:
             data = self.readUserCommands()
@@ -51,28 +109,28 @@ class AirFryer:
 
             if data != -1 and data != None:
                 if data['subcode'] == 0xC3:
-                    if data['value'] == 1:
+                    if data['value'] == 0x01:
                         self.stateToOn()
-                    elif data['value'] == 2:
+                    elif data['value'] == 0x02:
                         self.stateToOff()
-                    elif data['value'] == 3:
+                    elif data['value'] == 0x03:
                         self.startRunning()
-                    elif data['value'] == 4:
+                    elif data['value'] == 0x04:
                         self.stopRunning()
-                    elif data['value'] == 5:
+                    elif data['value'] == 0x05:
                         self.incrementTime()
-                    elif data['value'] == 6:
+                    elif data['value'] == 0x06:
                         self.decrementTime()
-                    elif data['value'] == 7:
+                    elif data['value'] == 0x07:
                         self.toggleMode()
-                    # dostuff
             time.sleep(0.2)
 
     def startRunning(self):
         self.state = 'running'
+        self.timeLeft = self.referenceTime
         self.controle(0, 0)
         self.modBus.write(0x01, 0x23, 0xD3, (1, 6 ,0 , 2), 1)
-        time.sleep(1)
+        time.sleep(0.2)
         self.modBus.read()
 
     def stopRunning(self):
@@ -98,13 +156,14 @@ class AirFryer:
 
     def controleOff(self, _signum, _frame):
         self.stateToOff()
+        # close uart
 
     def stateToOff(self):
         self.state = 'off'
         self.powerControl.stop_pwm()
         self.lcd.turn_off_lcd_backlight()
         self.modBus.write(0x01, 0x23, 0xD3, (1, 6 ,0 , 2), 0)
-        time.sleep(1)
+        time.sleep(0.2)
         self.modBus.read()
 
     def updateCurrentExternalTemperature(self):
@@ -112,5 +171,5 @@ class AirFryer:
 
     def readUserCommands(self):
         self.modBus.write(0x01, 0x23, 0xC3 , (1, 6 ,0 , 2), None)
-        time.sleep(1)
+        time.sleep(0.2)
         return self.modBus.read()
