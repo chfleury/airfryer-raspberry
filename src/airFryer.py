@@ -7,6 +7,7 @@ from pid.pid import PID
 from lcd_display.lcd_display import LCDController
 from temperature.temperature_bme import Bme280
 from temperature.temperature import Bmp280
+import random
 
 class AirFryer:
     def __init__(self):
@@ -33,7 +34,12 @@ class AirFryer:
 
         self.externalTemperatureSensor = Bmp280()
 
-    # Signal handler function
+        self.presets = [
+            {'name': 'Frango', 'referenceTime': 30, 'referenceTemperature': 55},
+            {'name': 'Batata', 'referenceTime': 60, 'referenceTemperature': 65},
+            {'name': 'Waffle', 'referenceTime': 25, 'referenceTemperature': 50}
+        ]
+
     def handle_SIGALRM(self, _signum, _frame):
         self.controle()
 
@@ -133,7 +139,8 @@ class AirFryer:
 
     def startRunning(self):
         self.state = 'running'
-        self.timeLeft = self.referenceTime
+        if self.mode == 'auto':
+            self.timeLeft = self.referenceTime
         self.controle()
         self.modBus.write(0x01, 0x16, 0xD5, (1, 6 ,0 , 2), 0b1)
         time.sleep(0.2)
@@ -152,14 +159,27 @@ class AirFryer:
         pass
 
     def toggleMode(self):
-        pass
+        mode = 0b0
+        if self.mode == 'auto':
+            self.mode = 'manual'
+        elif self.mode == 'manual':
+            self.mode = 'auto'
+            randomPreset = random.choice(self.presets)
+            self.referenceTime = randomPreset['referenceTime']
+            self.referenceTemperature = randomPreset['referenceTemperature']
+            self.sendReferenceTemperature()
+            mode = 0b1
+
+        self.modBus.write(0x01, 0x16, 0xD4, (1, 6 ,0 , 2), mode)
+        time.sleep(0.2)
+        self.modBus.read()
 
     def stateToOn(self):
         self.state = 'on'
         # turn lcd on
         self.lcd.turn_on_lcd_backlight()
         self.modBus.write(0x01, 0x16, 0xD3, (1, 6 ,0 , 2), 0b1)
-        time.sleep(1)
+        time.sleep(0.2)
         self.modBus.read()
 
 
@@ -179,8 +199,11 @@ class AirFryer:
         self.currentExternalTemperature = self.externalTemperatureSensor.getTemperature()
 
     def sendPidSignal(self, pidSignal):
-        self.modBus.write(0x01, 0x16, 0xD2 , (1, 6 ,0 , 2), pidSignal)
+        self.modBus.write(0x01, 0x16, 0xD1 , (1, 6 ,0 , 2), pidSignal)
 
+    def sendReferenceTemperature(self):
+        self.modBus.write(0x01, 0x16, 0xD2 , (1, 6 ,0 , 2), self.referenceTemperature)
+   
 
     def readUserCommands(self):
         self.modBus.write(0x01, 0x23, 0xC3 , (1, 6 ,0 , 2), None)
