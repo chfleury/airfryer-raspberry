@@ -24,7 +24,7 @@ class LCDController:
 
         self.bus = smbus.SMBus(1)  
 
-        self.lcd_backlight_state = True
+        self.lcd_backlight_state = 0x00
 
     def init_lcd(self):
         self.lcd_byte(0x33, self.LCD_CMD)  
@@ -60,6 +60,9 @@ class LCDController:
 
     def turn_off_lcd_backlight(self):
         self.lcd_backlight_state = self.LCD_BACKLIGHT_OFF
-
+        self.lcd_string(' ', self.LCD_LINE_1)
+        self.lcd_string(' ', self.LCD_LINE_2)
     def turn_on_lcd_backlight(self):
         self.lcd_backlight_state = self.LCD_BACKLIGHT_ON
+        self.lcd_string(' ', self.LCD_LINE_1)
+        self.lcd_string(' ', self.LCD_LINE_2)
