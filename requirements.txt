@@ -1,3 +1,4 @@
 bmp280
 smbus
 wiringpi
+pyserial
