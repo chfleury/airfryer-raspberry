@@ -10,7 +10,7 @@ from temperature.temperature import Bmp280
 
 class AirFryer:
     def __init__(self):
-        signal.signal(signal.SIGALRM, self.handle_SIGINT)
+        signal.signal(signal.SIGALRM, self.handle_SIGALRM)
         signal.signal(signal.SIGINT, self.controleOff)
 
         self.state = 'off' # 'on', 'off', 'running'
@@ -34,9 +34,9 @@ class AirFryer:
         self.externalTemperatureSensor = Bmp280()
 
     # Signal handler function
-    def handle_SIGINT(self, _signum, _frame):
+    def handle_SIGALRM(self, _signum, _frame):
         self.controle()
-        
+
     def controle(self):
         self.updateTemperatures()
 
@@ -49,7 +49,7 @@ class AirFryer:
 
 
         if self.state == 'running':
-            signal.alarm(1)
+            signal.signal.alarm(1)
 
             lcdLineOne = ''
             lcdLineTwo = ''
