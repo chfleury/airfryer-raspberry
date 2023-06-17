@@ -23,9 +23,13 @@ class ModBus:
             tx_buffer += struct.pack('B', matricula[3])
             p_tx_buffer += 7
 
-            if subcode >= 0xD1 and subcode <= 0xD7:
+            if subcode == 0xD1 or subcode == 0xD2  or subcode == 0xD6  or subcode == 0xD7 :
                 tx_buffer += struct.pack('I', data)
                 p_tx_buffer += 4
+
+            elif subcode == 0xD3 or subcode == 0xD4 or subcode == 0xD5:
+                tx_buffer += struct.pack('B', data)
+                p_tx_buffer += 1           
             elif subcode == 0xD8:
                 strLen = len(data)
                 tx_buffer += struct.pack('B', strLen)
@@ -46,11 +50,27 @@ class ModBus:
     def read(self):
         data_buffer = self.uart.read_UART()
         index = 0
+        data = {"code": 0x00, "subcode": 0x00, "value": 0}
         if data_buffer != 0 and data_buffer != 1:
             if data_buffer[index] != self.myAddress:
                 return -1
             index += 1
+            data['code'] = data_buffer[index]
+            index += 1
+            data['subcode'] = data_buffer[index]
+            index += 1
+            if data['subcode'] ==0xC1 or data['subcode'] == 0xC2:
+                data['value'] = struct.unpack('<f', data_buffer[index:index+4+1])[0]
+            else:
+                data['value'] = struct.unpack('<I', data_buffer[index:index+4+1])[0]
+            index += 4
 
+            crc = struct.unpack('<h', data_buffer[index:index+2+1])[0]
+
+            if crc != crc.calcula_CRC(data_buffer[:index+1]):
+                return -1
+            
+            return data
 
         
 x = ModBus()
