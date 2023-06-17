@@ -41,15 +41,15 @@ class AirFryer:
         self.updateTemperatures()
 
         if self.state == 'on':
-            self.lcd_string('Modo: Manual', self.LCD_LINE_1)
+            self.lcd.lcd_string('Modo: Manual', self.LCD_LINE_1)
             # self.lcd_string('Modo: Automatico - Frango', self.LCD_LINE_1)
 
-            self.lcd_string('Ref.: {:05.2f}*C'.format(self.referenceTemperature), self.LCD_LINE_2)
+            self.lcd.lcd_string('Ref.: {:05.2f}*C'.format(self.referenceTemperature), self.LCD_LINE_2)
             # self.lcd_string('Tempo: 1min', self.LCD_LINE_2) self.referenceTime
 
 
         if self.state == 'running':
-            signal.signal.alarm(1)
+            signal.alarm(1)
 
             lcdLineOne = ''
             lcdLineTwo = ''
@@ -72,18 +72,18 @@ class AirFryer:
                     minutes, seconds = divmod(self.timeLeft, 60)
                     lcdLineTwo =  'Tempo: {:02d}:{:02d}'.format(minutes, seconds)
 
-            self.lcd_string(lcdLineOne, self.LCD_LINE_2)
-            self.lcd_string(lcdLineTwo, self.LCD_LINE_2)
+            self.lcd.lcd_string(lcdLineOne, self.LCD_LINE_2)
+            self.lcd.lcd_string(lcdLineTwo, self.LCD_LINE_2)
 
             self.pid.updateReference(self.referenceTemperature)
 
-            signal = self.pid.pidControl(self.currentInternalTemperature)
+            pidSignal= self.pid.pidControl(self.currentInternalTemperature)
 
-            if signal < 0:
-                signal *= -1
-                self.powerControl.set_FAN_pwm(signal)
+            if pidSignal < 0:
+                pidSignal *= -1
+                self.powerControl.set_FAN_pwm(pidSignal)
             else:
-                self.powerControl.set_resistor_pwm(signal)
+                self.powerControl.set_resistor_pwm(pidSignal)
 
             print("SIGALRM received!")
 
