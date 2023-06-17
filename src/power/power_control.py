@@ -4,12 +4,11 @@ class PowerControl:
     def __init__(self):
         self.RESISTOR_PIN = 23
         self.FAN_PIN = 23
-
-    def init_power_control(self):
         wiringpi.wiringPiSetup()
 
         wiringpi.softPwmCreate(self.RESISTOR_PIN, 0, 100)
         wiringpi.softPwmCreate(self.FAN_PIN, 0, 100)
+
 
     def set_resistor_pwm(self, signal):
         if signal > 100:

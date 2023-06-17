@@ -11,12 +11,12 @@ class PID:
         self.erro_total = 0.0
         self.erro_anterior = 0.0
         self.sinal_de_controle_MAX = 100
-        self.sinal_de_controle_MIN = 100
+        self.sinal_de_controle_MIN = -40
 
-    def pid_atualiza_referencia(self, referencia_):
+    def updateReference(self, referencia_):
         self.referencia = referencia_
 
-    def pid_controle(self, saida_medida):
+    def pidControl(self, saida_medida):
         erro = self.referencia - saida_medida
 
         self.erro_total += erro # Acumula o erro (Termo Integral)
