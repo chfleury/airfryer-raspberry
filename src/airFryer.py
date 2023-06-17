@@ -47,9 +47,11 @@ class AirFryer:
     def mainLoop(self):
         while True:
             data = self.readUserCommands()
+            
             if data != -1:
                 if data['subcode'] == 0xC3:
-                    print(data['value'])
+                    if data['value'] == 1:
+                        self.stateToOn()
                     # dostuff
             time.sleep(0.2)
 
@@ -61,11 +63,14 @@ class AirFryer:
         self.state = 'on'
         # turn lcd on
         self.lcd.turn_on_lcd_backlight()
+        self.modBus.write(0x01, 0x23, 0xD3, (1, 6 ,0 , 2), 1)
+
 
     def stateToOff(self):
         self.state = 'off'
         self.powerControl.stop_pwm()
         self.lcd.turn_off_lcd_backlight()
+        self.modBus.write(0x01, 0x23, 0xD3, (1, 6 ,0 , 2), 0)
 
     def updateCurrentExternalTemperature(self):
         self.currentExternalTemperature = self.externalTemperatureSensor.getTemperature()
@@ -73,6 +78,6 @@ class AirFryer:
 
     def readUserCommands(self):
         self.modBus.write(0x01, 0x23, 0xC3 , (1, 6 ,0 , 2), None)
-        time.sleep(0.1)
+        time.sleep(1)
         data = self.modBus.read()
         print('readUserCommands',data)

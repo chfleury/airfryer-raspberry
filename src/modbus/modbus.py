@@ -25,6 +25,8 @@ class ModBus:
             tx_buffer += struct.pack('B', matricula[3])
             p_tx_buffer += 7
 
+            print('subcode', subcode)
+
             if subcode == 0xD1 or subcode == 0xD2  or subcode == 0xD6  or subcode == 0xD7 :
                 tx_buffer += struct.pack('I', data)
                 p_tx_buffer += 4
@@ -38,12 +40,12 @@ class ModBus:
                 tx_buffer += data.encode()
                 p_tx_buffer += strLen
 
-            tx_buffer += struct.pack('h', calcula_CRC(tx_buffer, p_tx_buffer))
+
+            tx_buffer += struct.pack('H', calcula_CRC(tx_buffer, p_tx_buffer))
             p_tx_buffer += 2
 
 
-            for i in tx_buffer:
-                print(i)
+
             self.uart.write_UART(tx_buffer)
         except Exception as e:
             print(e)
@@ -51,9 +53,16 @@ class ModBus:
 
     def read(self):
         data_buffer = self.uart.read_UART()
+
+       
+        print(data_buffer)
+        print('len', len(data_buffer))
         index = 0
         data = {"code": 0x00, "subcode": 0x00, "value": 0}
         if data_buffer != 0 and data_buffer != 1:
+
+            for i in data_buffer:
+                print('read  ',i)
             if data_buffer[index] != self.myAddress:
                 return -1
             index += 1
@@ -62,16 +71,19 @@ class ModBus:
             data['subcode'] = data_buffer[index]
             index += 1
             if data['subcode'] ==0xC1 or data['subcode'] == 0xC2:
-                data['value'] = struct.unpack('<f', data_buffer[index:index+4+1])[0]
+                data['value'] = struct.unpack('f', data_buffer[index:index+4])[0]
             else:
-                data['value'] = struct.unpack('<I', data_buffer[index:index+4+1])[0]
+                data['value'] = struct.unpack('I', data_buffer[index:index+4])[0]
             index += 4
 
-            crc = struct.unpack('<h', data_buffer[index:index+2+1])[0]
+            print('index', index, index+2)
 
-            if crc != calcula_CRC(data_buffer[:index+1]):
+            crc = struct.unpack('H', data_buffer[index:index+2])[0]
+            print('data', data)
+            print('crc', crc,  calcula_CRC(data_buffer[:-2], len(data_buffer) - 2))
+            if crc != calcula_CRC(data_buffer[:-2], len(data_buffer) - 2):
                 return -1
             
             return data
-
+        return -1
         

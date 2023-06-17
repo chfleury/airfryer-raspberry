@@ -34,7 +34,7 @@ class Uart:
         if self.uart0_filestream:
             data_buffer = bytearray()
 
-            data = self.uart0_filestream.read()
+            data = self.uart0_filestream.read(300)
             if data:
                 data_buffer.extend(data)
                 return data_buffer
