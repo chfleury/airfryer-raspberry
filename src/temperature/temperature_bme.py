@@ -1,15 +1,16 @@
-import bme280
-import smbus2
+try:
+    from smbus2 import SMBus
+except ImportError:
+    from smbus import SMBus
+from bme280 import BME280
 
- 
+
 class Bme280:
     def __init__(self):
-        port = 1
-        self.bus = smbus2.SMBus(port)
-        self.address = 0x76
-        self.calibration_params = bme280.load_calibration_params(self.bus, self.address)
+        self.bus = SMBus(1)
+        self.bme280 = BME280(i2c_dev=self.bus)
 
 
 
     def getTemperature(self):
-        return bme280.sample(self.bus, self.address, self.calibration_params).temperature
+        return self.bme280.get_temperature()
