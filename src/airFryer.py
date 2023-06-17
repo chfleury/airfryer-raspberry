@@ -41,10 +41,10 @@ class AirFryer:
         self.updateTemperatures()
 
         if self.state == 'on':
-            self.lcd.lcd_string('Modo: Manual', self.LCD_LINE_1)
+            self.lcd.lcd_string('Modo: Manual', self.lcd.LCD_LINE_1)
             # self.lcd_string('Modo: Automatico - Frango', self.LCD_LINE_1)
 
-            self.lcd.lcd_string('Ref.: {:05.2f}*C'.format(self.referenceTemperature), self.LCD_LINE_2)
+            self.lcd.lcd_string('Ref.: {:05.2f}*C'.format(self.referenceTemperature), self.lcd.LCD_LINE_2)
             # self.lcd_string('Tempo: 1min', self.LCD_LINE_2) self.referenceTime
 
 
@@ -72,8 +72,8 @@ class AirFryer:
                     minutes, seconds = divmod(self.timeLeft, 60)
                     lcdLineTwo =  'Tempo: {:02d}:{:02d}'.format(minutes, seconds)
 
-            self.lcd.lcd_string(lcdLineOne, self.LCD_LINE_2)
-            self.lcd.lcd_string(lcdLineTwo, self.LCD_LINE_2)
+            self.lcd.lcd_string(lcdLineOne, self.lcd.LCD_LINE_2)
+            self.lcd.lcd_string(lcdLineTwo, self.lcd.LCD_LINE_2)
 
             self.pid.updateReference(self.referenceTemperature)
 
