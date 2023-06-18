@@ -1,7 +1,7 @@
 import RPi.GPIO as GPIO
 import threading
 import time
-# pullup pull down
+from menu import Menu
 
 CLK_GPIO = 16
 SW_GPIO = 21
@@ -14,6 +14,10 @@ GPIO.add_event_detect(SW_GPIO ,GPIO.FALLING) # FALLING EVENT
 GPIO.setup(DT_GPIO, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)   # DT_GPIO
 GPIO.setup(CLK_GPIO, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)  # CLK_GPIO   
 
+
+
+myMenu = Menu()
+myMenu.menu(None)
 
 def handleEncoder():
     delta = 0
@@ -42,12 +46,12 @@ def handleEncoder():
         lastButtonState = buttonState
 
         if clickCount == 1 and (time.time() - lastClickTime) > timeLimitToDoubleClick:
-            print("Clique único detectado")
+            myMenu.menu('singleClick')
             clickCount = 0
 
 
         elif clickCount == 2:
-            print("Clique duplo detectado")
+            myMenu.menu('doubleClick')
 
         if clickCount >= 2:
             clickCount = 0
@@ -55,9 +59,12 @@ def handleEncoder():
         if CLK != CLK_reference:
             if DT != CLK:
                 delta += 1
+                myMenu.menu('right')
+
             else:
                 delta -= 1
-                
+                myMenu.menu('left')
+
             print(delta)
            
         time.sleep(0.0003)
