@@ -42,8 +42,29 @@ class AirFryer:
             {'label': 'Waffle', 'referenceTime': 25, 'referenceTemperature': 35}
         ]
 
-    def handle_SIGALRM(self, _signum, _frame):
-        self.controllLoop()
+
+    def mainLoop(self):
+        while True:
+            data = self.readUserCommands()
+
+            if data != -1 and data != None:
+                if data['subcode'] == 0xC3:
+                    if data['value'] == 0x01:
+                        self.stateToOn()
+                    elif data['value'] == 0x02:
+                        self.stateToOff()
+                    elif data['value'] == 0x03:
+                        self.startRunning()
+                    elif data['value'] == 0x04:
+                        self.stopRunning()
+                    elif data['value'] == 0x05:
+                        self.incrementTime()
+                    elif data['value'] == 0x06:
+                        self.decrementTime()
+                    elif data['value'] == 0x07:
+                        self.toggleMode()
+            time.sleep(0.2)
+
 
     def controllLoop(self):
         print('time', self.timeLeft, self.referenceTime)
@@ -72,7 +93,6 @@ class AirFryer:
             lcdLineTwo = ''
    
             lcdLineOne = 'TI:{:.1f} TR:{:.1f}'.format(self.currentInternalTemperature, self.referenceTemperature)
-            # lcdLineOne = 'Frango - 50*C' todo pensar melhor
             if self.runningState == 'preheating':
                 lcdLineTwo = 'Pre-aquecendo...'
                 lowerLimit = self.referenceTemperature - (self.referenceTemperature * 0.05)
@@ -104,7 +124,6 @@ class AirFryer:
 
             print('pidSignal', pidSignal)
 
-            # if pidSignal != self.lastSignal:
             fanSignal = 0
             resistorSignal = 0
             if pidSignal < 0:
@@ -122,6 +141,11 @@ class AirFryer:
                 resistorSignal = pidSignal
 
             writeLog(self.currentInternalTemperature, self.currentExternalTemperature, self.referenceTemperature, fanSignal, resistorSignal)
+    
+    
+    def handle_SIGALRM(self, _signum, _frame):
+        self.controllLoop()
+    
     def updateTemperatures(self):
         self.modBus.write(0x01, 0x23, 0xC1 , (1, 6 ,0 , 2), None)
         time.sleep(0.2)
@@ -142,34 +166,10 @@ class AirFryer:
         self.modBus.write(0x01, 0x16, 0xD6 , (1, 6 ,0 , 2), self.currentExternalTemperature)
         
 
-    def mainLoop(self):
-        while True:
-            data = self.readUserCommands()
-            # print('readUserCommands',data)
-
-            if data != -1 and data != None:
-                if data['subcode'] == 0xC3:
-                    if data['value'] == 0x01:
-                        self.stateToOn()
-                    elif data['value'] == 0x02:
-                        self.stateToOff()
-                    elif data['value'] == 0x03:
-                        self.startRunning()
-                    elif data['value'] == 0x04:
-                        self.stopRunning()
-                    elif data['value'] == 0x05:
-                        self.incrementTime()
-                    elif data['value'] == 0x06:
-                        self.decrementTime()
-                    elif data['value'] == 0x07:
-                        self.toggleMode()
-            time.sleep(0.2)
-
     def startRunning(self):
         if self.referenceTime > 0:
             self.state = 'running'
             self.timeLeft = self.referenceTime
-            # self.controllLoop()
             self.modBus.write(0x01, 0x16, 0xD5, (1, 6 ,0 , 2), 0b1)
             time.sleep(0.2)
             self.modBus.read()
@@ -215,7 +215,6 @@ class AirFryer:
 
     def stateToOn(self):
         self.state = 'on'
-        # turn lcd on
         self.controllLoop()
         self.lcd.turn_on_lcd_backlight()
         self.modBus.write(0x01, 0x16, 0xD3, (1, 6 ,0 , 2), 0b1)
@@ -225,8 +224,8 @@ class AirFryer:
 
     def controleOff(self, _signum, _frame):
         self.stateToOff()
+        self.modBus.close()
         exit()
-        # close uart
 
     def stateToOff(self):
         self.state = 'off'

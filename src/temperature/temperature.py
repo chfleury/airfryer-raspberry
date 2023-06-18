@@ -14,9 +14,3 @@ class Bmp280:
     def getTemperature(self):
         
         return float(self.bmp280.get_temperature())
-  
-
-# while True:
-#     temperature = bmp280.get_temperature()
-#     print('{:05.2f}*C'.format(temperature))
-#     time.sleep(1)

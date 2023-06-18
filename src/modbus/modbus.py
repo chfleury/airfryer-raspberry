@@ -12,7 +12,6 @@ class ModBus:
 
     def write(self, target_address, code, subcode, matricula, data):
         try:
-            # print(self, target_address, code, subcode, matricula, data)
             tx_buffer = bytearray()
             p_tx_buffer = 0
 
@@ -24,8 +23,6 @@ class ModBus:
             tx_buffer += struct.pack('B', matricula[2])
             tx_buffer += struct.pack('B', matricula[3])
             p_tx_buffer += 7
-
-            # print('subcode', subcode)
 
             if subcode == 0xD1:
                 tx_buffer += struct.pack('i', data)
@@ -55,21 +52,13 @@ class ModBus:
             self.uart.write_UART(tx_buffer)
         except Exception as e:
             pass
-            # print(e)
-
 
     def read(self):
         data_buffer = self.uart.read_UART()
 
-       
-        # print(data_buffer)
-        # print('len', len(data_buffer))
         index = 0
         data = {"code": 0x00, "subcode": 0x00, "value": 0}
         if data_buffer != 0 and data_buffer != 1:
-
-            # for i in data_buffer:
-            #     print('read  ',i)
             if data_buffer[index] != self.myAddress:
                 return -1
             index += 1
@@ -83,14 +72,12 @@ class ModBus:
                 data['value'] = struct.unpack('I', data_buffer[index:index+4])[0]
             index += 4
 
-            # print('index', index, index+2)
-
             crc = struct.unpack('H', data_buffer[index:index+2])[0]
-            # print('data', data)
-            # print('crc', crc,  calcula_CRC(data_buffer[:-2], len(data_buffer) - 2))
             if crc != calcula_CRC(data_buffer[:-2], len(data_buffer) - 2):
                 return -1
             
             return data
         return -1
         
+    def close(self):
+        self.uart.close_UART()

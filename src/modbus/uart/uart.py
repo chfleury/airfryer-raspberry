@@ -7,14 +7,13 @@ class Uart:
     def init_UART(self):
         print('chegou aqui')
         try:
-            port = '/dev/serial0'  # Replace with the actual port name (e.g., '/dev/ttyUSB0' on Linux)
-            baud_rate = 9600  # Set the baud rate
+            port = '/dev/serial0'
+            baud_rate = 9600
             timeout = 0
             self.uart0_filestream = serial.Serial(port, baud_rate, timeout=timeout)
             if self.uart0_filestream.is_open:
                 print("Serial port is already open.")
             else:
-                # Open the serial port
                 self.uart0_filestream.open()
                 print("Serial port opened successfully.")
 
@@ -25,7 +24,6 @@ class Uart:
 
     def write_UART(self, buffer):
         if self.uart0_filestream:
-            # print('wrote')
             self.uart0_filestream.write(buffer)
         else:
             print('failed to write')
@@ -39,7 +37,6 @@ class Uart:
                 data_buffer.extend(data)
                 return data_buffer
             else:
-                # print('no content')
                 return 0
         else:
             print('failed to read')
