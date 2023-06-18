@@ -150,7 +150,9 @@ class AirFryer:
         self.state = 'on'
         self.sendPidSignal(0)
         self.powerControl.stop_pwm()
-
+        self.modBus.write(0x01, 0x16, 0xD5, (1, 6 ,0 , 2), 0b0)
+        time.sleep(0.2)
+        self.modBus.read()
 
     def incrementTime(self):
         pass
@@ -190,10 +192,16 @@ class AirFryer:
     def stateToOff(self):
         self.state = 'off'
         self.powerControl.stop_pwm()
+        
+        self.modBus.write(0x01, 0x16, 0xD5, (1, 6 ,0 , 2), 0b0)
+        time.sleep(0.2)
+        self.modBus.read()
+
         self.lcd.turn_off_lcd_backlight()
         self.modBus.write(0x01, 0x16, 0xD3, (1, 6 ,0 , 2), 0)
         time.sleep(0.2)
         self.modBus.read()
+
 
     def updateCurrentExternalTemperature(self):
         self.currentExternalTemperature = self.externalTemperatureSensor.getTemperature()
