@@ -35,9 +35,9 @@ class AirFryer:
         self.externalTemperatureSensor = Bmp280()
 
         self.presets = [
-            {'name': 'Frango', 'referenceTime': 30, 'referenceTemperature': 55},
-            {'name': 'Batata', 'referenceTime': 60, 'referenceTemperature': 65},
-            {'name': 'Waffle', 'referenceTime': 25, 'referenceTemperature': 50}
+            {'name': 'Frango', 'referenceTime': 30, 'referenceTemperature': 30},
+            {'name': 'Batata', 'referenceTime': 60, 'referenceTemperature': 40},
+            {'name': 'Waffle', 'referenceTime': 25, 'referenceTemperature': 35}
         ]
 
     def handle_SIGALRM(self, _signum, _frame):
@@ -58,17 +58,16 @@ class AirFryer:
         elif self.state == 'running':
             signal.alarm(1)
             self.modBus.write(0x01, 0x16, 0xD7 , (1, 6 ,0 , 2), self.timeLeft)
-            self.timeLeft -= 1
 
             lcdLineOne = ''
             lcdLineTwo = ''
    
-            lcdLineOne = 'TI: {:.1f} *C Ref.: {:.1f} *C'.format(self.currentInternalTemperature, self.referenceTemperature)
+            lcdLineOne = 'TI: {:.1f} TR: {:.1f}'.format(self.currentInternalTemperature, self.referenceTemperature)
             # lcdLineOne = 'Frango - 50*C' todo pensar melhor
             if self.runningState == 'preheating':
                 lcdLineTwo = 'Pre-aquecendo...'
-                lowerLimit = self.referenceTemperature - (self.referenceTemperature * 0.1)
-                upperLimit = self.referenceTemperature + (self.referenceTemperature * 0.1) 
+                lowerLimit = self.referenceTemperature - (self.referenceTemperature * 0.05)
+                upperLimit = self.referenceTemperature + (self.referenceTemperature * 0.05) 
                 if lowerLimit <= self.currentInternalTemperature <= upperLimit:
                     self.runningState = 'heating'
             elif self.runningState == 'cooling':
@@ -79,11 +78,13 @@ class AirFryer:
                     self.runningState = 'preheating'
                     self.state = 'on'
             elif self.runningState == 'heating':
+                self.timeLeft -= 1
+
                 minutes, seconds = divmod(self.timeLeft, 60)
                 lcdLineTwo =  'Tempo: {:02d}:{:02d}'.format(minutes, seconds)
                 if self.timeLeft < 1:
                     self.runningState = 'cooling'
-                    self.referenceTemperature = self.externalTemperatureSensor
+                    self.referenceTemperature = self.currentExternalTemperature
             self.lcd.lcd_string(lcdLineOne, self.lcd.LCD_LINE_1)
             self.lcd.lcd_string(lcdLineTwo, self.lcd.LCD_LINE_2)
 

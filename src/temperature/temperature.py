@@ -12,7 +12,8 @@ class Bmp280:
 
 
     def getTemperature(self):
-        return self.bmp280.get_temperature()
+        
+        return float(self.bmp280.get_temperature())
   
 
 # while True:
