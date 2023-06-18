@@ -1,5 +1,5 @@
 
-from airFryer import AirFryer
+from air_fryer import AirFryer
 
 
 airFryer = AirFryer()
