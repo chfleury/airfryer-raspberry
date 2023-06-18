@@ -56,18 +56,28 @@ class AirFryer:
 
         if self.state == 'running':
             signal.alarm(1)
+            self.modBus.write(0x01, 0x16, 0xD7 , (1, 6 ,0 , 2), self.timeLeft)
+            self.timeLeft -= self.timeLeft
 
             lcdLineOne = ''
             lcdLineTwo = ''
             if self.mode == 'manual':
                 lcdLineOne = 'TI: {:.1f} *C Ref.: {:.1f} *C'.format(self.currentInternalTemperature, self.referenceTemperature)
-               
-                if self.runningState == 'cooling':
+                # lcdLineOne = 'Frango - 50*C' todo pensar melhor
+                if self.runningState == 'preheating':
+                    lcdLineTwo = 'Pre-aquecendo...'
+                elif self.runningState == 'cooling':
                     lcdLineTwo = 'Esfriando...'
                 elif self.runningState == 'heating':
-                    lcdLineTwo =  'Aquecendo...'
+                    minutes, seconds = divmod(self.timeLeft, 60)
+                    lcdLineTwo =  'Tempo: {:02d}:{:02d}'.format(minutes, seconds)
+                # lcdLineOne = 'TI: {:.1f} *C Ref.: {:.1f} *C'.format(self.currentInternalTemperature, self.referenceTemperature)
+               
+                # if self.runningState == 'cooling':
+                #     lcdLineTwo = 'Esfriando...'
+                # elif self.runningState == 'heating':
+                #     lcdLineTwo =  'Aquecendo...'
             elif self.mode == 'auto':
-                self.timeLeft -= self.timeLeft
                 lcdLineOne = 'TI: {:.1f} *C Ref.: {:.1f} *C'.format(self.currentInternalTemperature, self.referenceTemperature)
                 # lcdLineOne = 'Frango - 50*C' todo pensar melhor
                 if self.runningState == 'preheating':
@@ -87,13 +97,16 @@ class AirFryer:
 
             self.sendPidSignal(pidSignal)
 
+            print('pidSignal', pidSignal)
             if pidSignal < 0:
                 pidSignal *= -1
                 self.powerControl.set_FAN_pwm(pidSignal)
+                print('setou fan')
             else:
                 self.powerControl.set_resistor_pwm(pidSignal)
+                print('setou resistor')
 
-            print("SIGALRM received!")
+            # print("SIGALRM received!")
 
 
     def updateTemperatures(self):
@@ -102,6 +115,7 @@ class AirFryer:
         data = self.modBus.read()
         if data != -1  and data != None:
             self.currentInternalTemperature = data['value']
+            print('interna', self.currentInternalTemperature)
         
         self.modBus.write(0x01, 0x23, 0xC2 , (1, 6 ,0 , 2), None)
         time.sleep(0.2)
@@ -117,7 +131,7 @@ class AirFryer:
     def mainLoop(self):
         while True:
             data = self.readUserCommands()
-            print('readUserCommands',data)
+            # print('readUserCommands',data)
 
             if data != -1 and data != None:
                 if data['subcode'] == 0xC3:
@@ -155,10 +169,12 @@ class AirFryer:
         self.modBus.read()
 
     def incrementTime(self):
-        pass
+        self.referenceTime += 60
 
     def decrementTime(self):
-        pass
+        self.referenceTime -= 60
+        if self.referenceTime < 0: self.referenceTime = 0
+
 
     def toggleMode(self):
         mode = 0b0

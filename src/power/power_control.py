@@ -5,7 +5,7 @@ class PowerControl:
         self.RESISTOR_PIN = 23
         self.FAN_PIN = 24
         wiringpi.wiringPiSetup()
-
+        wiringpi.wiringPiSetupGpio()
         wiringpi.pinMode(self.RESISTOR_PIN, wiringpi.OUTPUT)
         wiringpi.pinMode(self.FAN_PIN, wiringpi.OUTPUT)
 
@@ -18,12 +18,14 @@ class PowerControl:
             signal = 100
         elif signal < 0:
             signal = 0
+        print('pwm com singal', signal)
         wiringpi.softPwmWrite(self.RESISTOR_PIN, signal)
 
     def set_FAN_pwm(self, signal):
         if signal > 0:
             if signal < 40:
                 signal = 40
+            print('wiringpi.softPwmWrite(self.FAN_PIN, signal)')
             wiringpi.softPwmWrite(self.FAN_PIN, signal)
         else:
             wiringpi.softPwmWrite(self.FAN_PIN, 0)

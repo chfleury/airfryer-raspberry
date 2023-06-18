@@ -12,7 +12,7 @@ class ModBus:
 
     def write(self, target_address, code, subcode, matricula, data):
         try:
-            print(self, target_address, code, subcode, matricula, data)
+            # print(self, target_address, code, subcode, matricula, data)
             tx_buffer = bytearray()
             p_tx_buffer = 0
 
@@ -51,7 +51,8 @@ class ModBus:
 
             self.uart.write_UART(tx_buffer)
         except Exception as e:
-            print(e)
+            pass
+            # print(e)
 
 
     def read(self):

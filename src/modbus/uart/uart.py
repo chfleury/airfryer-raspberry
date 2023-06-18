@@ -25,7 +25,7 @@ class Uart:
 
     def write_UART(self, buffer):
         if self.uart0_filestream:
-            print('wrote')
+            # print('wrote')
             self.uart0_filestream.write(buffer)
         else:
             print('failed to write')
@@ -39,7 +39,7 @@ class Uart:
                 data_buffer.extend(data)
                 return data_buffer
             else:
-                print('no content')
+                # print('no content')
                 return 0
         else:
             print('failed to read')
