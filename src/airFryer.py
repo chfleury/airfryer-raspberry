@@ -44,51 +44,47 @@ class AirFryer:
         self.controle()
 
     def controle(self):
+        print('time', self.timeLeft, self.referenceTime)
         self.updateTemperatures()
 
         if self.state == 'on':
             self.lcd.lcd_string('Modo: Manual', self.lcd.LCD_LINE_1)
             # self.lcd_string('Modo: Automatico - Frango', self.LCD_LINE_1)
 
-            self.lcd.lcd_string('Ref.: {:05.2f}*C'.format(self.referenceTemperature), self.lcd.LCD_LINE_2)
+            self.lcd.lcd_string('TR: {:05.2f} TA: {:05.2f}'.format(self.referenceTemperature, self.currentExternalTemperature), self.lcd.LCD_LINE_2)
             # self.lcd_string('Tempo: 1min', self.LCD_LINE_2) self.referenceTime
 
 
-        if self.state == 'running':
+        elif self.state == 'running':
             signal.alarm(1)
             self.modBus.write(0x01, 0x16, 0xD7 , (1, 6 ,0 , 2), self.timeLeft)
-            self.timeLeft -= self.timeLeft
+            self.timeLeft -= 1
 
             lcdLineOne = ''
             lcdLineTwo = ''
-            if self.mode == 'manual':
-                lcdLineOne = 'TI: {:.1f} *C Ref.: {:.1f} *C'.format(self.currentInternalTemperature, self.referenceTemperature)
-                # lcdLineOne = 'Frango - 50*C' todo pensar melhor
-                if self.runningState == 'preheating':
-                    lcdLineTwo = 'Pre-aquecendo...'
-                elif self.runningState == 'cooling':
-                    lcdLineTwo = 'Esfriando...'
-                elif self.runningState == 'heating':
-                    minutes, seconds = divmod(self.timeLeft, 60)
-                    lcdLineTwo =  'Tempo: {:02d}:{:02d}'.format(minutes, seconds)
-                # lcdLineOne = 'TI: {:.1f} *C Ref.: {:.1f} *C'.format(self.currentInternalTemperature, self.referenceTemperature)
-               
-                # if self.runningState == 'cooling':
-                #     lcdLineTwo = 'Esfriando...'
-                # elif self.runningState == 'heating':
-                #     lcdLineTwo =  'Aquecendo...'
-            elif self.mode == 'auto':
-                lcdLineOne = 'TI: {:.1f} *C Ref.: {:.1f} *C'.format(self.currentInternalTemperature, self.referenceTemperature)
-                # lcdLineOne = 'Frango - 50*C' todo pensar melhor
-                if self.runningState == 'preheating':
-                    lcdLineTwo = 'Pre-aquecendo...'
-                elif self.runningState == 'cooling':
-                    lcdLineTwo = 'Esfriando...'
-                elif self.runningState == 'heating':
-                    minutes, seconds = divmod(self.timeLeft, 60)
-                    lcdLineTwo =  'Tempo: {:02d}:{:02d}'.format(minutes, seconds)
-
-            self.lcd.lcd_string(lcdLineOne, self.lcd.LCD_LINE_2)
+   
+            lcdLineOne = 'TI: {:.1f} *C Ref.: {:.1f} *C'.format(self.currentInternalTemperature, self.referenceTemperature)
+            # lcdLineOne = 'Frango - 50*C' todo pensar melhor
+            if self.runningState == 'preheating':
+                lcdLineTwo = 'Pre-aquecendo...'
+                lowerLimit = self.referenceTemperature - (self.referenceTemperature * 0.1)
+                upperLimit = self.referenceTemperature + (self.referenceTemperature * 0.1) 
+                if lowerLimit <= self.currentInternalTemperature <= upperLimit:
+                    self.runningState = 'heating'
+            elif self.runningState == 'cooling':
+                lcdLineTwo = 'Esfriando...'
+                lowerLimit = self.referenceTemperature - (self.referenceTemperature * 0.2)
+                upperLimit = self.referenceTemperature + (self.referenceTemperature * 0.2) 
+                if lowerLimit <= self.currentInternalTemperature <= upperLimit:
+                    self.runningState = 'preheating'
+                    self.state = 'on'
+            elif self.runningState == 'heating':
+                minutes, seconds = divmod(self.timeLeft, 60)
+                lcdLineTwo =  'Tempo: {:02d}:{:02d}'.format(minutes, seconds)
+                if self.timeLeft < 1:
+                    self.runningState = 'cooling'
+                    self.referenceTemperature = self.externalTemperatureSensor
+            self.lcd.lcd_string(lcdLineOne, self.lcd.LCD_LINE_1)
             self.lcd.lcd_string(lcdLineTwo, self.lcd.LCD_LINE_2)
 
             self.pid.updateReference(self.referenceTemperature)
@@ -100,10 +96,10 @@ class AirFryer:
             print('pidSignal', pidSignal)
             if pidSignal < 0:
                 pidSignal *= -1
-                self.powerControl.set_FAN_pwm(pidSignal)
+                self.powerControl.set_FAN_pwm(int(round(pidSignal)))
                 print('setou fan')
             else:
-                self.powerControl.set_resistor_pwm(pidSignal)
+                self.powerControl.set_resistor_pwm(int(round(pidSignal)))
                 print('setou resistor')
 
             # print("SIGALRM received!")
@@ -153,8 +149,7 @@ class AirFryer:
 
     def startRunning(self):
         self.state = 'running'
-        if self.mode == 'auto':
-            self.timeLeft = self.referenceTime
+        self.timeLeft = self.referenceTime
         self.controle()
         self.modBus.write(0x01, 0x16, 0xD5, (1, 6 ,0 , 2), 0b1)
         time.sleep(0.2)
@@ -170,10 +165,13 @@ class AirFryer:
 
     def incrementTime(self):
         self.referenceTime += 60
+        self.modBus.write(0x01, 0x16, 0xD7 , (1, 6 ,0 , 2), self.referenceTime)
+
 
     def decrementTime(self):
         self.referenceTime -= 60
         if self.referenceTime < 0: self.referenceTime = 0
+        self.modBus.write(0x01, 0x16, 0xD7 , (1, 6 ,0 , 2), self.referenceTime)
 
 
     def toggleMode(self):
@@ -203,6 +201,7 @@ class AirFryer:
 
     def controleOff(self, _signum, _frame):
         self.stateToOff()
+        exit()
         # close uart
 
     def stateToOff(self):
@@ -223,7 +222,7 @@ class AirFryer:
         self.currentExternalTemperature = self.externalTemperatureSensor.getTemperature()
 
     def sendPidSignal(self, pidSignal):
-        self.modBus.write(0x01, 0x16, 0xD1 , (1, 6 ,0 , 2), pidSignal)
+        self.modBus.write(0x01, 0x16, 0xD1 , (1, 6 ,0 , 2), int(round(pidSignal)))
 
     def sendReferenceTemperature(self):
         self.modBus.write(0x01, 0x16, 0xD2 , (1, 6 ,0 , 2), self.referenceTemperature)

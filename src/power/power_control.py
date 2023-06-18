@@ -19,14 +19,14 @@ class PowerControl:
         elif signal < 0:
             signal = 0
         print('pwm com singal', signal)
-        wiringpi.softPwmWrite(self.RESISTOR_PIN, signal)
+        wiringpi.softPwmWrite(self.RESISTOR_PIN, int(round(signal)))
 
     def set_FAN_pwm(self, signal):
         if signal > 0:
             if signal < 40:
                 signal = 40
             print('wiringpi.softPwmWrite(self.FAN_PIN, signal)')
-            wiringpi.softPwmWrite(self.FAN_PIN, signal)
+            wiringpi.softPwmWrite(self.FAN_PIN, int(round(signal)))
         else:
             wiringpi.softPwmWrite(self.FAN_PIN, 0)
 
