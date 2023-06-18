@@ -1,24 +1,27 @@
 import keyboard
+from menu import Menu
+
+myMenu = Menu()
+myMenu.menu(None)
 
 def on_up_arrow():
-    print("Seta para cima pressionada")
+    myMenu.menu('right')
 
 def on_down_arrow():
-    print("Seta para baixo pressionada")
+    myMenu.menu('left')
 
 def on_backspace():
-    print("Backspace pressionado")
+    myMenu.menu('doubleClick')
 
 def on_enter():
-    print("Enter pressionado")
-
+    myMenu.menu('singleClick')
 def listen_keyboard():
     while True:
         event = keyboard.read_event()
         if event.event_type == "down":
-            if event.name == "up":
+            if event.name == "home":
                 on_up_arrow()
-            elif event.name == "down":
+            elif event.name == "end":
                 on_down_arrow()
             elif event.name == "backspace":
                 on_backspace()

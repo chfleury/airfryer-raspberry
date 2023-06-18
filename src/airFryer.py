@@ -43,24 +43,29 @@ class AirFryer:
         ]
 
     def handle_SIGALRM(self, _signum, _frame):
-        self.controle()
+        self.controllLoop()
 
-    def controle(self):
+    def controllLoop(self):
         print('time', self.timeLeft, self.referenceTime)
         self.updateTemperatures()
         self.pid.updateReference(self.referenceTemperature)
+        signal.alarm(1)
 
         if self.state == 'on':
             if self.mode == 'manual':
-                self.lcd.lcd_string('Modo: Manual', self.lcd.LCD_LINE_1)
-            else:
-                self.lcd.lcd_string('Modo: ' + self.selectedPreset['label'], self.lcd.LCD_LINE_1)
-        
-            self.lcd.lcd_string('TR:{:05.2f} TA: {:05.2f}'.format(self.referenceTemperature, self.currentExternalTemperature), self.lcd.LCD_LINE_2)
+                minutes, seconds = divmod(self.referenceTime, 60)
 
+                self.lcd.lcd_string('Manual T:{:02d}:{:02d}'.format(minutes, seconds), self.lcd.LCD_LINE_1)
+                self.lcd.lcd_string('TR:{:05.2f} TA:{:05.2f}'.format(self.referenceTemperature, self.currentExternalTemperature), self.lcd.LCD_LINE_2)
+
+            else:
+                self.lcd.lcd_string('Auto: ' + self.selectedPreset['label'], self.lcd.LCD_LINE_1)
+                minutes, seconds = divmod(self.referenceTime, 60)
+                self.lcd.lcd_string('TR:{:05.2f} T:{:02d}:{:02d}'.format(self.referenceTemperature, minutes, seconds), self.lcd.LCD_LINE_2)
+            
+            
 
         elif self.state == 'running':
-            signal.alarm(1)
             self.modBus.write(0x01, 0x16, 0xD7 , (1, 6 ,0 , 2), self.timeLeft)
 
             lcdLineOne = ''
@@ -164,7 +169,7 @@ class AirFryer:
         if self.referenceTime > 0:
             self.state = 'running'
             self.timeLeft = self.referenceTime
-            self.controle()
+            # self.controllLoop()
             self.modBus.write(0x01, 0x16, 0xD5, (1, 6 ,0 , 2), 0b1)
             time.sleep(0.2)
             self.modBus.read()
@@ -211,6 +216,7 @@ class AirFryer:
     def stateToOn(self):
         self.state = 'on'
         # turn lcd on
+        self.controllLoop()
         self.lcd.turn_on_lcd_backlight()
         self.modBus.write(0x01, 0x16, 0xD3, (1, 6 ,0 , 2), 0b1)
         time.sleep(0.2)

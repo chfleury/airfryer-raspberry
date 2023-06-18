@@ -1,7 +1,0 @@
-{
-  "files.associations": {
-    "termios.h": "c",
-    "crc.h": "c"
-  },
-  "C_Cpp.errorSquiggles": "disabled"
-}
