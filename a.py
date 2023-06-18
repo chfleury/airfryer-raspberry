@@ -1,11 +1,28 @@
-import struct
+import keyboard
 
+def on_up_arrow():
+    print("Seta para cima pressionada")
 
-tx_buffer = bytearray()
+def on_down_arrow():
+    print("Seta para baixo pressionada")
 
-tx_buffer += struct.pack('B', 0xC1)
-tx_buffer += struct.pack('B', 33)
-tx_buffer += struct.pack('B', 0xC1)
+def on_backspace():
+    print("Backspace pressionado")
 
-for i in tx_buffer:
-    print(i)
+def on_enter():
+    print("Enter pressionado")
+
+def listen_keyboard():
+    while True:
+        event = keyboard.read_event()
+        if event.event_type == "down":
+            if event.name == "up":
+                on_up_arrow()
+            elif event.name == "down":
+                on_down_arrow()
+            elif event.name == "backspace":
+                on_backspace()
+            elif event.name == "enter":
+                on_enter()
+
+listen_keyboard()

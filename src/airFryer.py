@@ -5,6 +5,7 @@ from modbus.modbus import ModBus
 from power.power_control import PowerControl
 from pid.pid import PID
 from lcd_display.lcd_display import LCDController
+from log.csv_log import writeLog
 from temperature.temperature_bme import Bme280
 from temperature.temperature import Bmp280
 import random
@@ -17,11 +18,11 @@ class AirFryer:
         self.state = 'off' # 'on', 'off', 'running'
         self.runningState = 'preheating' # 'preheating', 'heating', 'cooling'
         self.mode = 'manual' # 'manual', 'auto'
+        self.selectedPreset = None
         self.modBus = ModBus()
         
         self.powerControl = PowerControl()
-        self.pid = PID(30, 0.2, 400)
-        self.lastSignal = 0
+        self.pid = PID(30, 0.2, 600)
 
         self.referenceTemperature = 0
         self.currentInternalTemperature = 0
@@ -36,9 +37,9 @@ class AirFryer:
         self.externalTemperatureSensor = Bmp280()
 
         self.presets = [
-            {'name': 'Frango', 'referenceTime': 30, 'referenceTemperature': 30},
-            {'name': 'Batata', 'referenceTime': 60, 'referenceTemperature': 40},
-            {'name': 'Waffle', 'referenceTime': 25, 'referenceTemperature': 35}
+            {'label': 'Frango', 'referenceTime': 30, 'referenceTemperature': 30},
+            {'label': 'Batata', 'referenceTime': 60, 'referenceTemperature': 40},
+            {'label': 'Waffle', 'referenceTime': 25, 'referenceTemperature': 35}
         ]
 
     def handle_SIGALRM(self, _signum, _frame):
@@ -50,11 +51,12 @@ class AirFryer:
         self.pid.updateReference(self.referenceTemperature)
 
         if self.state == 'on':
-            self.lcd.lcd_string('Modo: Manual', self.lcd.LCD_LINE_1)
-            # self.lcd_string('Modo: Automatico - Frango', self.LCD_LINE_1)
-
-            self.lcd.lcd_string('TR:{:05.2f}TA: {:05.2f}'.format(self.referenceTemperature, self.currentExternalTemperature), self.lcd.LCD_LINE_2)
-            # self.lcd_string('Tempo: 1min', self.LCD_LINE_2) self.referenceTime
+            if self.mode == 'manual':
+                self.lcd.lcd_string('Modo: Manual', self.lcd.LCD_LINE_1)
+            else:
+                self.lcd.lcd_string('Modo: ' + self.selectedPreset['label'], self.lcd.LCD_LINE_1)
+        
+            self.lcd.lcd_string('TR:{:05.2f} TA: {:05.2f}'.format(self.referenceTemperature, self.currentExternalTemperature), self.lcd.LCD_LINE_2)
 
 
         elif self.state == 'running':
@@ -98,21 +100,23 @@ class AirFryer:
             print('pidSignal', pidSignal)
 
             # if pidSignal != self.lastSignal:
+            fanSignal = 0
+            resistorSignal = 0
             if pidSignal < 0:
                 pidSignal *= -1
                 self.powerControl.set_FAN_pwm(pidSignal)
                 self.powerControl.set_resistor_pwm(0)
 
                 print('setou fan')
-                self.lastSignal = pidSignal
+                fanSignal = pidSignal
             elif pidSignal > 0:
                 self.powerControl.set_resistor_pwm(pidSignal)
                 self.powerControl.set_FAN_pwm(0)
 
                 print('setou resistor')
-                self.lastSignal = pidSignal
+                resistorSignal = pidSignal
 
-
+            writeLog(self.currentInternalTemperature, self.currentExternalTemperature, self.referenceTemperature, fanSignal, resistorSignal)
     def updateTemperatures(self):
         self.modBus.write(0x01, 0x23, 0xC1 , (1, 6 ,0 , 2), None)
         time.sleep(0.2)
@@ -121,11 +125,12 @@ class AirFryer:
             self.currentInternalTemperature = data['value']
             print('interna', self.currentInternalTemperature)
         
-        self.modBus.write(0x01, 0x23, 0xC2 , (1, 6 ,0 , 2), None)
-        time.sleep(0.2)
-        data = self.modBus.read()
-        if data != -1  and data != None:
-            self.referenceTemperature = data['value']
+        if self.mode == 'manual':
+            self.modBus.write(0x01, 0x23, 0xC2 , (1, 6 ,0 , 2), None)
+            time.sleep(0.2)
+            data = self.modBus.read()
+            if data != -1  and data != None:
+                self.referenceTemperature = data['value']
 
         self.currentExternalTemperature = self.externalTemperatureSensor.getTemperature()
 
@@ -190,10 +195,14 @@ class AirFryer:
         elif self.mode == 'manual':
             self.mode = 'auto'
             randomPreset = random.choice(self.presets)
+            self.selectedPreset = randomPreset
             self.referenceTime = randomPreset['referenceTime']
             self.referenceTemperature = randomPreset['referenceTemperature']
             self.sendReferenceTemperature()
             mode = 0b1
+            
+            self.modBus.write(0x01, 0x16, 0xD7 , (1, 6 ,0 , 2), self.timeLeft)
+
 
         self.modBus.write(0x01, 0x16, 0xD4, (1, 6 ,0 , 2), mode)
         time.sleep(0.2)
