@@ -72,11 +72,11 @@ class AirFryer:
                     self.runningState = 'heating'
             elif self.runningState == 'cooling':
                 lcdLineTwo = 'Esfriando...'
-                lowerLimit = self.referenceTemperature - (self.referenceTemperature * 0.2)
-                upperLimit = self.referenceTemperature + (self.referenceTemperature * 0.2) 
+                lowerLimit = self.currentExternalTemperature - (self.currentExternalTemperature * 0.2)
+                upperLimit = self.currentExternalTemperature + (self.currentExternalTemperature * 0.2) 
                 if lowerLimit <= self.currentInternalTemperature <= upperLimit:
                     self.runningState = 'preheating'
-                    self.state = 'on'
+                    self.stopRunning()
             elif self.runningState == 'heating':
                 self.timeLeft -= 1
 
@@ -84,7 +84,6 @@ class AirFryer:
                 lcdLineTwo =  'Tempo: {:02d}:{:02d}'.format(minutes, seconds)
                 if self.timeLeft < 1:
                     self.runningState = 'cooling'
-                    self.referenceTemperature = self.currentExternalTemperature
             self.lcd.lcd_string(lcdLineOne, self.lcd.LCD_LINE_1)
             self.lcd.lcd_string(lcdLineTwo, self.lcd.LCD_LINE_2)
 
@@ -149,12 +148,13 @@ class AirFryer:
             time.sleep(0.2)
 
     def startRunning(self):
-        self.state = 'running'
-        self.timeLeft = self.referenceTime
-        self.controle()
-        self.modBus.write(0x01, 0x16, 0xD5, (1, 6 ,0 , 2), 0b1)
-        time.sleep(0.2)
-        self.modBus.read()
+        if self.referenceTime > 0:
+            self.state = 'running'
+            self.timeLeft = self.referenceTime
+            self.controle()
+            self.modBus.write(0x01, 0x16, 0xD5, (1, 6 ,0 , 2), 0b1)
+            time.sleep(0.2)
+            self.modBus.read()
 
     def stopRunning(self):
         self.state = 'on'
@@ -217,10 +217,6 @@ class AirFryer:
         self.modBus.write(0x01, 0x16, 0xD3, (1, 6 ,0 , 2), 0)
         time.sleep(0.2)
         self.modBus.read()
-
-
-    def updateCurrentExternalTemperature(self):
-        self.currentExternalTemperature = self.externalTemperatureSensor.getTemperature()
 
     def sendPidSignal(self, pidSignal):
         self.modBus.write(0x01, 0x16, 0xD1 , (1, 6 ,0 , 2), int(round(pidSignal)))

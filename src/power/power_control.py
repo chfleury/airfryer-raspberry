@@ -28,6 +28,8 @@ class PowerControl:
         wiringpi.softPwmWrite(self.FAN_PIN, int(round(signal)))
 
     def stop_pwm(self):
+        print('pwm com singal 0')
+
         wiringpi.softPwmWrite(self.RESISTOR_PIN, 0)
         wiringpi.softPwmWrite(self.FAN_PIN, 0)
 
