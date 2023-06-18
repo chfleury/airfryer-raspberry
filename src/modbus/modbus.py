@@ -27,11 +27,14 @@ class ModBus:
 
             # print('subcode', subcode)
 
-            if subcode == 0xD1  or subcode == 0xD7 :
+            if subcode == 0xD1:
+                tx_buffer += struct.pack('i', data)
+                p_tx_buffer += 4         
+            elif subcode == 0xD7 :
                 tx_buffer += struct.pack('I', data)
-                p_tx_buffer += 4
+                p_tx_buffer += 4 
 
-            if subcode == 0xD2  or subcode == 0xD6:
+            elif subcode == 0xD2  or subcode == 0xD6:
                 tx_buffer += struct.pack('f', data)
                 p_tx_buffer += 4
             elif subcode == 0xD3 or subcode == 0xD4 or subcode == 0xD5:
