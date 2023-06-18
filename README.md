@@ -10,4 +10,4 @@ Os pinos da GPIO do encoder podem ser setados no arquivo ```encoder.py``` nas pr
 
 O arquivo ```encoder_old.py``` é a minha implementação do encoder testada em sala, porém ainda sem o menu. Como eu não consegui testar o menu em sala, deixei o ```encoder_old.py``` para demonstrar o funcionamento do encoder caso o ```encoder.py``` não funcione.
 
-
+precisa selecionar tempo antes de iniciar
