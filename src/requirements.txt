@@ -1,5 +1,0 @@
-bmp280
-smbus
-wiringpi
-pyserial
-pimoroni-bme280

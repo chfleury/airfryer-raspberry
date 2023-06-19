@@ -1,5 +1,5 @@
 # Trabalho 2 - 2023/1
-Aluno: Christian Fleury Alencar Siqueira
+Aluno: Christian Fleury Alencar Siqueira <br>
 Matrícula: 190011602
 
 # Vídeo
@@ -66,3 +66,8 @@ No grafico de sinais fica facil ver a potência do resistor diminuindo de acordo
 
 ## Experimento 3
 
+No terceiro experimento foram usados dois presets do modo automático (Batata e Waffle). <br>
+
+![image info](./assets/sample_3_temperatures.png)
+
+![image info](./assets/sample_3_signals.png)
