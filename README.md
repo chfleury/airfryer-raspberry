@@ -13,6 +13,10 @@ Os pinos da GPIO do encoder podem ser setados no arquivo ```encoder.py``` nas pr
 
 O arquivo ```encoder_old.py``` é a minha implementação do encoder testada em sala, porém ainda sem o menu. Como eu não consegui testar o menu em sala, deixei o ```encoder_old.py``` para demonstrar o funcionamento do encoder caso o ```encoder.py``` não funcione.
 
+# Configuração de pinos
+
+Existem dois lugares com configurações dos pinos da GPIO, no arquivo ```encoder.py```e no arquivo ```power_control.py``` <br>
+
 # Como rodar
 
 Para roda o programa, basta instalar as dependências ```pip3 install -r requirements.txt``` (o arquivo requirements se encontra na pasta raiz), e depois rodar o arquivo main.py. ```python3 src/main.py``` <br>
