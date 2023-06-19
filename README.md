@@ -2,6 +2,9 @@
 Aluno: Christian Fleury Alencar Siqueira
 Matrícula: 190011602
 
+# Vídeo
+
+Link do vídeo: https://youtu.be/Z9nnpDg98kw <br>
 # Encoder
 O encoder se encontra na pasta ./encoder, nessa pasta existem 3 arquivos, ```encoder.py```, ```encoder_old.py```, ```menu.py```.<br>
 Para rodar o encoder, basta rodar o arquivo ```encoder.py```, através do comando ```python3 encoder/encoder.py```. <br>
@@ -43,4 +46,19 @@ O primeiro experimento foi de um cenário em que comecei já com o forno quente 
 
 Como visto nos gráficos, a temperatura interna começa acima da temperatura de referência, isso faz com que inicialmente, a ventoinha seja ativada em 100%, isso não reflete na temperatura pois provavelmente a ventoinha estava estragada no momento do experimento. <br>
 
-Após isso aumentei a temperatura de referência para ficar acima da temperatura interna, e ai sim podemos ver os sinais do resistor em ação, juntamente com o aumento da temperatura.
+Após isso aumentei a temperatura de referência para ficar acima da temperatura interna, e ai sim podemos ver os sinais do resistor em ação, juntamente com o aumento da temperatura.<br>
+
+## Experimento 2
+
+O segundo experimento foi manual de um cenário quase ideal (se não fosse o resfriamento lento). <br>
+
+![image info](./assets/sample_2_temperatures.png)
+
+![image info](./assets/sample_2_signals.png)
+
+A temperatura sobe até a referência, fica um tempo lá e depois desce resfriando lentamente. <br>
+
+No grafico de sinais fica facil ver a potência do resistor diminuindo de acordo com a proximidade com a temperatura de referência, até chegar no resfriamento. <br>
+
+## Experimento 3
+

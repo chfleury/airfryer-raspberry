@@ -6,7 +6,6 @@ from power.power_control import PowerControl
 from pid.pid import PID
 from lcd_display.lcd_display import LCDController
 from log.csv_log import writeLog
-from temperature.temperature_bme import Bme280
 from temperature.temperature import Bmp280
 import random
 
